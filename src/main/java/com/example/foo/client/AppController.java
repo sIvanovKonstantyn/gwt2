@@ -1,22 +1,35 @@
 package com.example.foo.client;
 
-import com.example.foo.service.AuthService;
-import com.example.foo.service.UserProxy;
+import com.google.gwt.user.client.Cookies;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.web.bindery.requestfactory.shared.Receiver;
 
 public class AppController {
+
+    private static boolean loggedIn;
+
+    public static  native void consoleLog(String text) /*-{
+        console.log(text);
+    }-*/;
+
     public static void drawWorkspace() {
 
-        AuthService.get().getUserRequestContext().checkUserInSession().fire(
-                new Receiver<UserProxy>() {
-                    @Override
-                    public void onSuccess(UserProxy userProxy) {
-                        if(userProxy == null) drawLogoutPage();
-                    }
-                }
-        );
+        final String loggedInCooky = Cookies.getCookie("loggedIn");
+
+        loggedIn = loggedInCooky == null
+                ? false
+        : Boolean.parseBoolean(loggedInCooky);
+
+        consoleLog("drawWorkspace()- logged:" + AppController.loggedIn);
+
+        if(!AppController.loggedIn) {
+            consoleLog("drawLogoutPage()");
+            drawLogoutPage();
+        } else {
+            consoleLog("ModulePainterImpl().draw()");
+            new ModulePainterImpl().draw();
+        }
     }
 
     private static void drawLogoutPage() {
@@ -26,5 +39,10 @@ public class AppController {
 
     private static void clearPage() {
         RootLayoutPanel.get().clear();
+    }
+
+    public static void login() {
+        Cookies.setCookie("loggedIn", "true");
+        Window.Location.reload();
     }
 }
